@@ -1,6 +1,7 @@
+import os
 import pandas as pd
 from playwright.sync_api import sync_playwright
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # Dictionnaire des banques (Nom -> Ticker ilboursa)
 BANQUES_ILBOURSA = {
@@ -18,23 +19,32 @@ BANQUES_ILBOURSA = {
     "Wifak International Bank": "WIFAK"
 }
 
+def excel_date_to_datetime(excel_date: int) -> datetime:
+    """Convertit une date sérialisée Excel en objet datetime Python."""
+    return datetime(1899, 12, 30) + timedelta(days=excel_date)
+
 def get_historique_banque(symbol: str, length: int = 180) -> pd.DataFrame:
     """
-    Récupère l'historique des cours pour une banque spécifique via Playwright.
+    Récupère l'historique des cours pour une banque.
+    Si le scraping échoue (ex: bloqué par le cloud), utilise un fichier CSV local en secours.
     """
+    # On définit le chemin du fichier CSV de secours
+    csv_path = f"data/{symbol}_historique.csv"
     url_api = f"https://www.ilboursa.com/api/charting/GetTicksEOD?symbol={symbol}&length={length}&period=0&addIntradayArray=false"
     
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True, args=['--no-sandbox', '--disable-dev-shm-usage'])
-        context = browser.new_context()
-        page = context.new_page()
-        
-        try:
-            # 1. Initialisation de la session
-            page.goto("https://www.ilboursa.com/", timeout=15000, wait_until="domcontentloaded")
-            page.wait_for_timeout(1500)
+    print(f"⏳ Tentative de récupération des données pour {symbol} via le web...")
+    
+    # --- TENTATIVE 1 : SCRAPING EN LIGNE ---
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True, args=['--no-sandbox', '--disable-dev-shm-usage'])
+            context = browser.new_context()
+            page = context.new_page()
             
-            # 2. Appel de l'API
+            # On réduit le timeout pour ne pas bloquer l'utilisateur trop longtemps
+            page.goto("https://www.ilboursa.com/", timeout=20000, wait_until="domcontentloaded")
+            page.wait_for_timeout(1000)
+            
             response = page.request.get(
                 url_api,
                 headers={
@@ -47,49 +57,49 @@ def get_historique_banque(symbol: str, length: int = 180) -> pd.DataFrame:
             if response.status == 200:
                 data = response.json()
                 
-                if not data or "QuoteTab" not in data or not data["QuoteTab"]:
-                    print(f"⚠️ Données vides ou introuvables pour {symbol}")
-                    return pd.DataFrame()
-
-                df = pd.DataFrame(data["QuoteTab"])
-                
-                # 3. Renommer les colonnes (sans utiliser inplace=True pour éviter les warnings)
-                df = df.rename(columns={
-                    "d": "Date_Orm", "o": "Open", "h": "High", 
-                    "l": "Low", "c": "Close", "v": "Volume"
-                })
-                
-                # 4. Créer un calendrier boursier fiable (jours ouvrés se terminant aujourd'hui)
-                df['Date'] = pd.bdate_range(end=datetime.today(), periods=len(df))
-                
-                # 5. Définir la date comme index et trier
-                df = df.set_index("Date")
-                df = df.sort_index()
-                
-                # 6. S'assurer que les colonnes sont numériques
-                for col in ["Open", "High", "Low", "Close", "Volume"]:
-                    df[col] = pd.to_numeric(df[col], errors='coerce')
-                
-                # On garde uniquement les colonnes utiles
-                df = df[["Open", "High", "Low", "Close", "Volume"]]
-                
-                return df
+                if data and "QuoteTab" in data and data["QuoteTab"]:
+                    df = pd.DataFrame(data["QuoteTab"])
+                    
+                    # Nettoyage et formatage
+                    df = df.rename(columns={"d": "Date", "o": "Open", "h": "High", "l": "Low", "c": "Close", "v": "Volume"})
+                    df["Date"] = df["Date"].apply(excel_date_to_datetime)
+                    df = df.set_index("Date").sort_index()
+                    
+                    for col in ["Open", "High", "Low", "Close", "Volume"]:
+                        df[col] = pd.to_numeric(df[col], errors='coerce')
+                    
+                    # SAUVEGARDE POUR LE MODE SECOURS
+                    os.makedirs("data", exist_ok=True)
+                    df.to_csv(csv_path)
+                    print(f"✅ Succès Web ! Données sauvegardées dans {csv_path}")
+                    
+                    return df
             else:
-                print(f"❌ Erreur HTTP {response.status} pour {symbol}")
-                return pd.DataFrame()
-                
-        except Exception as e:
-            print(f"❌ Erreur inattendue pour {symbol} : {e}")
-            return pd.DataFrame()
-        finally:
-            browser.close()
+                print(f"⚠️ Le site a renvoyé une erreur HTTP {response.status}.")
 
-if __name__ == "__main__":
-    print("=== Test de collecte pour la BIAT ===")
-    
-    df_biat = get_historique_banque("BIAT", length=180)
-    
-    if not df_biat.empty:
-        print("✅ Superbe ! Voici les 5 derniers jours de la BIAT avec de vraies dates :")
-        print(df_biat.tail(5))
-        print(f"\nNombre total de jours d'historique : {len(df_biat)}")
+    except Exception as e:
+        print(f"⚠️ Échec du scraping web : {e}")
+    finally:
+        try:
+            browser.close()
+        except:
+            pass
+
+    # --- TENTATIVE 2 : MODE SECOURS (LECTURE DU CSV) ---
+    print(f"🔄 Passage en mode secours (lecture de {csv_path})...")
+    if os.path.exists(csv_path):
+        try:
+            df_fallback = pd.read_csv(csv_path, index_col="Date", parse_dates=True)
+            # On s'assure que les colonnes numériques sont bien typées
+            for col in ["Open", "High", "Low", "Close", "Volume"]:
+                df_fallback[col] = pd.to_numeric(df_fallback[col], errors='coerce')
+            
+            print("✅ Succès local ! Données chargées depuis le fichier CSV.")
+            return df_fallback
+        except Exception as e:
+            print(f"❌ Erreur lors de la lecture du fichier CSV : {e}")
+    else:
+        print(f"❌ Aucun fichier de secours trouvé à l'emplacement : {csv_path}")
+
+    # Si tout échoue, on renvoie un DataFrame vide
+    return pd.DataFrame()
