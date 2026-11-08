@@ -25,7 +25,7 @@ def get_historique_banque(symbol: str, length: int = 180) -> pd.DataFrame:
     url_api = f"https://www.ilboursa.com/api/charting/GetTicksEOD?symbol={symbol}&length={length}&period=0&addIntradayArray=false"
     
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
+        browser = p.chromium.launch(headless=True, args=['--no-sandbox'])
         context = browser.new_context()
         page = context.new_page()
         
