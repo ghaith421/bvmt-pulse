@@ -3,7 +3,19 @@ import streamlit as st
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import pandas as pd
+import os
 
+# --- SÉCURITÉ POUR STREAMLIT CLOUD ---
+@st.cache_resource
+def installer_navigateur():
+    # On vérifie si le dossier de cache de Playwright existe
+    if not os.path.exists(os.path.expanduser("~/.cache/ms-playwright")):
+        print("⏳ Installation de Chromium pour Playwright...")
+        os.system("playwright install chromium")
+        print("✅ Installation terminée.")
+
+installer_navigateur()
+# --------------------------------------
 # Importation des modules
 from modules.market_data import get_historique_banque, BANQUES_ILBOURSA
 from modules.technical_analysis import calculer_indicateurs, calculer_score_technique, predire_tendance_ml
