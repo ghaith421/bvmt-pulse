@@ -1,8 +1,10 @@
-name: Mise à jour quotidienne des données
+name: Mise à jour horaire des données
 
 on:
   schedule:
-    - cron: '0 22 * * *' # Tous les jours à 23h (heure de Tunis)
+    # S'exécute toutes les heures, de 07:00 à 15:00 UTC (08:00 à 16:00 heure de Tunis)
+    # Du lundi au vendredi (1-5)
+    - cron: '0 7-15 * * 1-5'
   workflow_dispatch: # Permet de lancer manuellement
 
 jobs:
