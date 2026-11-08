@@ -2,104 +2,42 @@ import os
 import pandas as pd
 from playwright.sync_api import sync_playwright
 from datetime import datetime, timedelta
+import requests
+from io import StringIO
 
-# Dictionnaire des banques (Nom -> Ticker ilboursa)
-BANQUES_ILBOURSA = {
-    "Amen Bank": "AB",
-    "Attijari Bank": "TJARI",
-    "Arab Tunisian Bank": "ATB",
-    "Banque de Tunisie": "BT",
-    "Banque Nationale Agricole": "BNA",
-    "Banque de l'Habitat": "BH",
-    "Société Tunisienne de Banque": "STB",
-    "BIAT": "BIAT",
-    "Union Internationale de Banques": "UIB",
-    "Union Bancaire pour le Commerce et l'Industrie": "UBCI",
-    "Banque de Tunisie et des Emirats": "BTE",
-    "Wifak International Bank": "WIFAK"
-}
-
-def excel_date_to_datetime(excel_date: int) -> datetime:
-    """Convertit une date sérialisée Excel en objet datetime Python."""
-    return datetime(1899, 12, 30) + timedelta(days=excel_date)
+# ... (Gardez BANQUES_ILBOURSA et excel_date_to_datetime) ...
 
 def get_historique_banque(symbol: str, length: int = 180) -> pd.DataFrame:
-    """
-    Récupère l'historique des cours pour une banque.
-    Si le scraping échoue (ex: bloqué par le cloud), utilise un fichier CSV local en secours.
-    """
-    # On définit le chemin du fichier CSV de secours
-    csv_path = f"data/{symbol}_historique.csv"
-    url_api = f"https://www.ilboursa.com/api/charting/GetTicksEOD?symbol={symbol}&length={length}&period=0&addIntradayArray=false"
+    # ... (Gardez la partie TENTATIVE 1 : SCRAPING EN LIGNE avec Playwright) ...
+
+    # --- TENTATIVE 2 : MODE SECOURS (LECTURE DEPUIS GITHUB) ---
+    print("🔄 Passage en mode secours (lecture depuis GitHub)...")
     
-    print(f"⏳ Tentative de récupération des données pour {symbol} via le web...")
+    # ⚠️ REMPLACEZ PAR VOTRE NOM D'UTILISATEUR GITHUB
+    GITHUB_USER = "ghaith421" 
+    GITHUB_REPO = "bvmt-pulse"
     
-    # --- TENTATIVE 1 : SCRAPING EN LIGNE ---
+    # URL "Raw" de votre fichier CSV sur GitHub
+    github_url = f"https://raw.githubusercontent.com/{GITHUB_USER}/{GITHUB_REPO}/main/data/{symbol}_historique.csv"
+    
     try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True, args=['--no-sandbox', '--disable-dev-shm-usage'])
-            context = browser.new_context()
-            page = context.new_page()
-            
-            # On réduit le timeout pour ne pas bloquer l'utilisateur trop longtemps
-            page.goto("https://www.ilboursa.com/", timeout=20000, wait_until="domcontentloaded")
-            page.wait_for_timeout(1000)
-            
-            response = page.request.get(
-                url_api,
-                headers={
-                    "Referer": "https://www.ilboursa.com/",
-                    "X-Requested-With": "XMLHttpRequest",
-                    "Accept": "application/json, text/javascript, */*; q=0.01"
-                }
-            )
-            
-            if response.status == 200:
-                data = response.json()
-                
-                if data and "QuoteTab" in data and data["QuoteTab"]:
-                    df = pd.DataFrame(data["QuoteTab"])
-                    
-                    # Nettoyage et formatage
-                    df = df.rename(columns={"d": "Date", "o": "Open", "h": "High", "l": "Low", "c": "Close", "v": "Volume"})
-                    df["Date"] = df["Date"].apply(excel_date_to_datetime)
-                    df = df.set_index("Date").sort_index()
-                    
-                    for col in ["Open", "High", "Low", "Close", "Volume"]:
-                        df[col] = pd.to_numeric(df[col], errors='coerce')
-                    
-                    # SAUVEGARDE POUR LE MODE SECOURS
-                    os.makedirs("data", exist_ok=True)
-                    df.to_csv(csv_path)
-                    print(f"✅ Succès Web ! Données sauvegardées dans {csv_path}")
-                    
-                    return df
-            else:
-                print(f"⚠️ Le site a renvoyé une erreur HTTP {response.status}.")
-
-    except Exception as e:
-        print(f"⚠️ Échec du scraping web : {e}")
-    finally:
-        try:
-            browser.close()
-        except:
-            pass
-
-    # --- TENTATIVE 2 : MODE SECOURS (LECTURE DU CSV) ---
-    print(f"🔄 Passage en mode secours (lecture de {csv_path})...")
-    if os.path.exists(csv_path):
-        try:
-            df_fallback = pd.read_csv(csv_path, index_col="Date", parse_dates=True)
-            # On s'assure que les colonnes numériques sont bien typées
+        # On ajoute un paramètre de temps pour éviter le cache du navigateur
+        url_avec_cache_buster = f"{github_url}?t={datetime.now().timestamp()}"
+        response = requests.get(url_avec_cache_buster, timeout=10)
+        
+        if response.status_code == 200:
+            df_fallback = pd.read_csv(StringIO(response.text), index_col="Date", parse_dates=True)
             for col in ["Open", "High", "Low", "Close", "Volume"]:
                 df_fallback[col] = pd.to_numeric(df_fallback[col], errors='coerce')
-            
-            print("✅ Succès local ! Données chargées depuis le fichier CSV.")
+            print("✅ Succès local ! Données chargées depuis GitHub.")
             return df_fallback
-        except Exception as e:
-            print(f"❌ Erreur lors de la lecture du fichier CSV : {e}")
-    else:
-        print(f"❌ Aucun fichier de secours trouvé à l'emplacement : {csv_path}")
+        else:
+            print(f"❌ Échec de la récupération depuis GitHub (Code {response.status_code})")
+    except Exception as e:
+        print(f"❌ Erreur lors de la lecture depuis GitHub : {e}")
 
-    # Si tout échoue, on renvoie un DataFrame vide
+    # Dernier recours : le fichier local (si vous êtes sur votre PC)
+    if os.path.exists(f"data/{symbol}_historique.csv"):
+        return pd.read_csv(f"data/{symbol}_historique.csv", index_col="Date", parse_dates=True)
+
     return pd.DataFrame()

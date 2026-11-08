@@ -294,7 +294,7 @@ def banniere(label, valeur, couleur):
         f"<div class='b-value'>{html.escape(valeur)}</div></div>", unsafe_allow_html=True)
 
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=1800)
 def charger_donnees(symbol):
     return get_historique_banque(symbol, length=180)
 
