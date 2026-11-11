@@ -8,7 +8,6 @@ import os
 # --- SÉCURITÉ POUR STREAMLIT CLOUD ---
 @st.cache_resource
 def installer_navigateur():
-    # On vérifie si le dossier de cache de Playwright existe
     if not os.path.exists(os.path.expanduser("~/.cache/ms-playwright")):
         print("⏳ Installation de Chromium pour Playwright...")
         os.system("playwright install chromium")
@@ -16,6 +15,7 @@ def installer_navigateur():
 
 installer_navigateur()
 # --------------------------------------
+
 # Importation des modules
 from modules.market_data import get_historique_banque, BANQUES_ILBOURSA
 from modules.technical_analysis import calculer_indicateurs, calculer_score_technique, predire_tendance_ml
@@ -43,201 +43,92 @@ MUTED = "#8B96B8"
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
-
     html, body, [class*="css"] { font-family: 'Inter', sans-serif; color: #EAF0FF; }
     h1, h2, h3, h4 { font-family: 'Sora', sans-serif !important; letter-spacing: -0.02em; }
-
-    /* ---------- Fond animé ---------- */
     .stApp {
-        background:
-            radial-gradient(900px 500px at 8% -5%, rgba(139, 92, 246, 0.28), transparent 60%),
-            radial-gradient(800px 500px at 95% 5%, rgba(0, 217, 245, 0.20), transparent 60%),
-            radial-gradient(700px 500px at 50% 110%, rgba(255, 46, 147, 0.14), transparent 60%),
-            #060914;
+        background: radial-gradient(900px 500px at 8% -5%, rgba(139, 92, 246, 0.28), transparent 60%),
+                    radial-gradient(800px 500px at 95% 5%, rgba(0, 217, 245, 0.20), transparent 60%),
+                    radial-gradient(700px 500px at 50% 110%, rgba(255, 46, 147, 0.14), transparent 60%),
+                    #060914;
         background-attachment: fixed;
     }
     header[data-testid="stHeader"] { background: transparent; }
     .block-container { padding-top: 1.5rem; max-width: 1400px; }
-
-    /* ---------- Hero ---------- */
     .hero {
-        position: relative;
-        overflow: hidden;
-        border-radius: 24px;
-        padding: 34px 40px;
-        margin-bottom: 22px;
+        position: relative; overflow: hidden; border-radius: 24px; padding: 34px 40px; margin-bottom: 22px;
         background: linear-gradient(120deg, rgba(139,92,246,0.25), rgba(0,217,245,0.12) 55%, rgba(0,245,160,0.14));
-        border: 1px solid rgba(255,255,255,0.10);
-        box-shadow: 0 20px 60px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.08);
-        backdrop-filter: blur(14px);
+        border: 1px solid rgba(255,255,255,0.10); box-shadow: 0 20px 60px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.08); backdrop-filter: blur(14px);
     }
     .hero::after {
-        content: "";
-        position: absolute; inset: 0;
-        background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.07) 50%, transparent 70%);
-        transform: translateX(-100%);
-        animation: sweep 6s ease-in-out infinite;
-        pointer-events: none;
+        content: ""; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.07) 50%, transparent 70%);
+        transform: translateX(-100%); animation: sweep 6s ease-in-out infinite; pointer-events: none;
     }
     @keyframes sweep { 0% { transform: translateX(-100%); } 55%, 100% { transform: translateX(100%); } }
-
     .hero-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 18px; }
     .hero h1 {
-        margin: 0; padding: 0;
-        font-size: 2.6rem; font-weight: 800; line-height: 1.1;
-        background: linear-gradient(90deg, #00F5A0, #00D9F5 45%, #FF2E93);
-        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        margin: 0; padding: 0; font-size: 2.6rem; font-weight: 800; line-height: 1.1;
+        background: linear-gradient(90deg, #00F5A0, #00D9F5 45%, #FF2E93); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
     .hero p { margin: 8px 0 0; color: #AEB8D8; font-size: 1.02rem; }
-
     .live-pill {
-        display: inline-flex; align-items: center; gap: 8px;
-        padding: 6px 14px; border-radius: 999px;
-        background: rgba(0,245,160,0.12); border: 1px solid rgba(0,245,160,0.45);
-        color: #00F5A0; font-weight: 600; font-size: 0.82rem;
+        display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px;
+        background: rgba(0,245,160,0.12); border: 1px solid rgba(0,245,160,0.45); color: #00F5A0; font-weight: 600; font-size: 0.82rem;
     }
     .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #00F5A0; animation: pulse 1.6s infinite; }
-    @keyframes pulse {
-        0% { box-shadow: 0 0 0 0 rgba(0,245,160,0.7); }
-        70% { box-shadow: 0 0 0 10px rgba(0,245,160,0); }
-        100% { box-shadow: 0 0 0 0 rgba(0,245,160,0); }
-    }
-
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(0,245,160,0.7); } 70% { box-shadow: 0 0 0 10px rgba(0,245,160,0); } 100% { box-shadow: 0 0 0 0 rgba(0,245,160,0); } }
     .hero-price { text-align: right; }
     .hero-price .asset { color: #AEB8D8; font-weight: 600; font-size: 0.95rem; }
     .hero-price .price { font-family: 'Sora', sans-serif; font-size: 2.3rem; font-weight: 800; line-height: 1.1; }
     .chip { display: inline-block; padding: 3px 12px; border-radius: 999px; font-weight: 700; font-size: 0.88rem; }
     .chip.up { background: rgba(0,245,160,0.15); color: #00F5A0; }
     .chip.down { background: rgba(255,46,147,0.15); color: #FF2E93; }
-
-    /* ---------- Cartes métriques ---------- */
     div[data-testid="stMetric"] {
-        position: relative;
-        background: linear-gradient(160deg, rgba(24,30,56,0.85), rgba(14,18,36,0.85));
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 18px;
-        padding: 18px 20px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-        overflow: hidden;
-        transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
+        position: relative; background: linear-gradient(160deg, rgba(24,30,56,0.85), rgba(14,18,36,0.85));
+        border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; padding: 18px 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.35); overflow: hidden; transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
     }
-    div[data-testid="stMetric"]::before {
-        content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
-        background: linear-gradient(180deg, #00F5A0, #00D9F5, #8B5CF6);
-    }
-    div[data-testid="stMetric"]:hover {
-        transform: translateY(-4px);
-        border-color: rgba(0,217,245,0.6);
-        box-shadow: 0 14px 40px rgba(0,217,245,0.18);
-    }
+    div[data-testid="stMetric"]::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: linear-gradient(180deg, #00F5A0, #00D9F5, #8B5CF6); }
+    div[data-testid="stMetric"]:hover { transform: translateY(-4px); border-color: rgba(0,217,245,0.6); box-shadow: 0 14px 40px rgba(0,217,245,0.18); }
     div[data-testid="stMetricLabel"] p { color: #8B96B8; font-weight: 600; font-size: 0.85rem; }
     div[data-testid="stMetricValue"] { font-family: 'Sora', sans-serif; font-weight: 800; font-size: 1.9rem; }
-
-    /* ---------- Boutons ---------- */
     .stButton>button, .stDownloadButton>button {
-        background: linear-gradient(90deg, #8B5CF6 0%, #00D9F5 55%, #00F5A0 100%);
-        background-size: 200% 100%;
-        color: #04101A;
-        font-weight: 700;
-        border-radius: 12px;
-        border: none;
-        width: 100%;
-        padding: 12px 16px;
-        transition: background-position .5s ease, transform .2s ease, box-shadow .2s ease;
+        background: linear-gradient(90deg, #8B5CF6 0%, #00D9F5 55%, #00F5A0 100%); background-size: 200% 100%; color: #04101A;
+        font-weight: 700; border-radius: 12px; border: none; width: 100%; padding: 12px 16px; transition: background-position .5s ease, transform .2s ease, box-shadow .2s ease;
     }
-    .stButton>button:hover, .stDownloadButton>button:hover {
-        background-position: 100% 0;
-        transform: translateY(-2px);
-        box-shadow: 0 8px 28px rgba(0,217,245,0.45);
-        color: #04101A;
-    }
-    .stButton>button:focus-visible, .stDownloadButton>button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-
-    /* ---------- Onglets en pilules ---------- */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px; padding: 6px; border-radius: 16px;
-        background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
-    }
-    .stTabs [data-baseweb="tab"] {
-        height: 44px; padding: 0 18px; border-radius: 12px;
-        background: transparent; color: #8B96B8; font-weight: 600;
-        transition: all .25s ease;
-    }
+    .stButton>button:hover, .stDownloadButton>button:hover { background-position: 100% 0; transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,217,245,0.45); color: #04101A; }
+    .stTabs [data-baseweb="tab-list"] { gap: 8px; padding: 6px; border-radius: 16px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); }
+    .stTabs [data-baseweb="tab"] { height: 44px; padding: 0 18px; border-radius: 12px; background: transparent; color: #8B96B8; font-weight: 600; transition: all .25s ease; }
     .stTabs [data-baseweb="tab"]:hover { color: #fff; background: rgba(255,255,255,0.06); }
-    .stTabs [aria-selected="true"] {
-        color: #04101A !important;
-        background: linear-gradient(90deg, #00F5A0, #00D9F5) !important;
-        box-shadow: 0 6px 20px rgba(0,245,160,0.35);
-    }
+    .stTabs [aria-selected="true"] { color: #04101A !important; background: linear-gradient(90deg, #00F5A0, #00D9F5) !important; box-shadow: 0 6px 20px rgba(0,245,160,0.35); }
     .stTabs [data-baseweb="tab-highlight"], .stTabs [data-baseweb="tab-border"] { display: none; }
-
-    /* ---------- Sidebar ---------- */
-    [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #0A0F24 0%, #070A1A 100%);
-        border-right: 1px solid rgba(255,255,255,0.06);
-    }
+    [data-testid="stSidebar"] { background: linear-gradient(180deg, #0A0F24 0%, #070A1A 100%); border-right: 1px solid rgba(255,255,255,0.06); }
     .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
-    .brand-logo {
-        width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; font-size: 1.3rem;
-        background: linear-gradient(135deg, #8B5CF6, #00D9F5); box-shadow: 0 6px 20px rgba(139,92,246,0.5);
-    }
+    .brand-logo { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; font-size: 1.3rem; background: linear-gradient(135deg, #8B5CF6, #00D9F5); box-shadow: 0 6px 20px rgba(139,92,246,0.5); }
     .brand-name { font-family: 'Sora', sans-serif; font-weight: 800; font-size: 1.15rem; }
     .brand-sub { color: #8B96B8; font-size: 0.78rem; }
-
     .weights { display: flex; height: 12px; border-radius: 999px; overflow: hidden; margin: 6px 0 10px; background: rgba(255,255,255,0.06); }
     .weights span { display: block; height: 100%; }
     .legend { display: flex; justify-content: space-between; font-size: 0.78rem; color: #AEB8D8; }
-
-    /* ---------- Titres de section ---------- */
     .section-title { font-family: 'Sora', sans-serif; font-size: 1.35rem; font-weight: 700; margin: 6px 0 14px; }
     .section-title small { color: #8B96B8; font-weight: 500; font-size: 0.9rem; margin-left: 8px; }
-
-    /* ---------- Cartes news ---------- */
-    .news-card {
-        border-radius: 16px; padding: 16px 20px; margin-bottom: 12px;
-        background: rgba(18,24,46,0.85); border: 1px solid rgba(255,255,255,0.07);
-        border-left: 5px solid var(--c);
-        transition: transform .2s ease, box-shadow .2s ease;
-    }
+    .news-card { border-radius: 16px; padding: 16px 20px; margin-bottom: 12px; background: rgba(18,24,46,0.85); border: 1px solid rgba(255,255,255,0.07); border-left: 5px solid var(--c); transition: transform .2s ease, box-shadow .2s ease; }
     .news-card:hover { transform: translateX(4px); box-shadow: 0 8px 28px rgba(0,0,0,0.4); }
     .news-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
     .news-title { font-weight: 600; font-size: 1.02rem; line-height: 1.4; }
-    .news-score {
-        flex-shrink: 0; padding: 4px 12px; border-radius: 999px; font-weight: 800; font-size: 0.85rem;
-        color: #04101A; background: var(--c);
-    }
+    .news-score { flex-shrink: 0; padding: 4px 12px; border-radius: 999px; font-weight: 800; font-size: 0.85rem; color: #04101A; background: var(--c); }
     .news-just { color: #AEB8D8; font-size: 0.92rem; margin-top: 8px; }
-
-    /* ---------- Bannières ---------- */
-    .banner {
-        border-radius: 18px; padding: 18px 22px; margin: 10px 0;
-        border: 1px solid var(--c); background: linear-gradient(120deg, rgba(0,0,0,0.25), rgba(0,0,0,0));
-        box-shadow: 0 0 30px color-mix(in srgb, var(--c) 25%, transparent);
-    }
+    .banner { border-radius: 18px; padding: 18px 22px; margin: 10px 0; border: 1px solid var(--c); background: linear-gradient(120deg, rgba(0,0,0,0.25), rgba(0,0,0,0)); box-shadow: 0 0 30px color-mix(in srgb, var(--c) 25%, transparent); }
     .banner .b-label { color: #AEB8D8; font-size: 0.82rem; font-weight: 600; }
     .banner .b-value { font-family: 'Sora', sans-serif; font-size: 1.7rem; font-weight: 800; color: var(--c); }
-
-    /* ---------- Divers ---------- */
-    [data-testid="stFileUploader"] section {
-        border: 2px dashed rgba(0,217,245,0.4); border-radius: 18px; background: rgba(0,217,245,0.04);
-    }
+    [data-testid="stFileUploader"] section { border: 2px dashed rgba(0,217,245,0.4); border-radius: 18px; background: rgba(0,217,245,0.04); }
     [data-testid="stDataFrame"] { border-radius: 14px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); }
     div[data-testid="stAlert"] { border-radius: 14px; }
     hr { border-color: rgba(255,255,255,0.08) !important; }
     ::-webkit-scrollbar { width: 8px; height: 8px; }
     ::-webkit-scrollbar-thumb { background: linear-gradient(#8B5CF6, #00D9F5); border-radius: 8px; }
-
-    @media (max-width: 768px) {
-        .hero { padding: 22px; }
-        .hero h1 { font-size: 1.8rem; }
-        .hero-price { text-align: left; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-        .hero::after, .live-dot { animation: none; }
-    }
+    @media (max-width: 768px) { .hero { padding: 22px; } .hero h1 { font-size: 1.8rem; } .hero-price { text-align: left; } }
+    @media (prefers-reduced-motion: reduce) { .hero::after, .live-dot { animation: none; } }
 </style>
 """, unsafe_allow_html=True)
-
 
 # ==========================================
 # 2. OUTILS DE DESIGN
@@ -248,7 +139,6 @@ def couleur_score(s):
     if s >= 40: return AMBER
     return PINK
 
-
 def style_fig(fig, height=500):
     fig.update_layout(
         height=height, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
@@ -257,11 +147,9 @@ def style_fig(fig, height=500):
         margin=dict(l=10, r=10, t=30, b=10),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, bgcolor='rgba(0,0,0,0)'),
     )
-    fig.update_xaxes(showgrid=True, gridcolor='rgba(255,255,255,0.05)', zeroline=False,
-                     showspikes=True, spikecolor=CYAN, spikethickness=1, spikedash="dot")
+    fig.update_xaxes(showgrid=True, gridcolor='rgba(255,255,255,0.05)', zeroline=False, showspikes=True, spikecolor=CYAN, spikethickness=1, spikedash="dot")
     fig.update_yaxes(showgrid=True, gridcolor='rgba(255,255,255,0.05)', zeroline=False)
     return fig
-
 
 def jauge(valeur, titre, height=240):
     c = couleur_score(valeur)
@@ -271,38 +159,26 @@ def jauge(valeur, titre, height=240):
         title=dict(text=titre, font=dict(size=15, color=MUTED)),
         gauge=dict(
             axis=dict(range=[0, 100], tickcolor=MUTED, tickfont=dict(color=MUTED, size=10)),
-            bar=dict(color=c, thickness=0.28),
-            bgcolor="rgba(255,255,255,0.04)", borderwidth=0,
-            steps=[dict(range=[0, 40], color="rgba(255,46,147,0.18)"),
-                   dict(range=[40, 55], color="rgba(255,176,32,0.16)"),
-                   dict(range=[55, 70], color="rgba(0,217,245,0.16)"),
-                   dict(range=[70, 100], color="rgba(0,245,160,0.18)")],
+            bar=dict(color=c, thickness=0.28), bgcolor="rgba(255,255,255,0.04)", borderwidth=0,
+            steps=[dict(range=[0, 40], color="rgba(255,46,147,0.18)"), dict(range=[40, 55], color="rgba(255,176,32,0.16)"), dict(range=[55, 70], color="rgba(0,217,245,0.16)"), dict(range=[70, 100], color="rgba(0,245,160,0.18)")],
         )))
-    fig.update_layout(height=height, paper_bgcolor='rgba(0,0,0,0)', font=dict(color=TEXT),
-                      margin=dict(l=20, r=20, t=50, b=10))
+    fig.update_layout(height=height, paper_bgcolor='rgba(0,0,0,0)', font=dict(color=TEXT), margin=dict(l=20, r=20, t=50, b=10))
     return fig
-
 
 def titre_section(texte, sous_titre=""):
     sub = f"<small>{html.escape(sous_titre)}</small>" if sous_titre else ""
     st.markdown(f"<div class='section-title'>{html.escape(texte)}{sub}</div>", unsafe_allow_html=True)
 
-
 def banniere(label, valeur, couleur):
-    st.markdown(
-        f"<div class='banner' style='--c:{couleur}'><div class='b-label'>{html.escape(label)}</div>"
-        f"<div class='b-value'>{html.escape(valeur)}</div></div>", unsafe_allow_html=True)
-
+    st.markdown(f"<div class='banner' style='--c:{couleur}'><div class='b-label'>{html.escape(label)}</div><div class='b-value'>{html.escape(valeur)}</div></div>", unsafe_allow_html=True)
 
 @st.cache_data(ttl=1800)
 def charger_donnees(symbol):
     return get_historique_banque(symbol, length=180)
 
-
 @st.cache_data(show_spinner=False)
 def traiter_pdf_cached(contenu):
     return analyser_document_financier(contenu)
-
 
 # ==========================================
 # 3. ÉTAT DE SESSION
@@ -312,8 +188,7 @@ defaults = {
     "resultat_fond": None, "dernier_cours": 0.0, "current_bank": None, "news_res": None,
 }
 for k, v in defaults.items():
-    if k not in st.session_state:
-        st.session_state[k] = v
+    if k not in st.session_state: st.session_state[k] = v
 
 # ==========================================
 # 4. BARRE LATÉRALE
@@ -328,8 +203,7 @@ with st.sidebar:
     st.markdown("---")
 
     st.markdown("##### 🏦 Actif")
-    banque_selectionnee = st.selectbox("Sélectionnez un actif :", options=list(BANQUES_ILBOURSA.keys()),
-                                       label_visibility="collapsed")
+    banque_selectionnee = st.selectbox("Sélectionnez un actif :", options=list(BANQUES_ILBOURSA.keys()), label_visibility="collapsed")
     ticker = BANQUES_ILBOURSA[banque_selectionnee]
 
     st.markdown("---")
@@ -433,7 +307,6 @@ with tab_technique:
             fig.add_trace(go.Bar(x=df.index, y=df['Volume'], marker_color=couleurs_vol, opacity=0.6, name='Volume'), row=row, col=1)
             row += 1
 
-        # RSI avec zones colorées
         fig.add_hrect(y0=70, y1=100, fillcolor="rgba(255,46,147,0.08)", line_width=0, row=row, col=1)
         fig.add_hrect(y0=0, y1=30, fillcolor="rgba(0,245,160,0.08)", line_width=0, row=row, col=1)
         fig.add_trace(go.Scatter(x=df.index, y=df['RSI'], line=dict(color=VIOLET, width=2), name='RSI'), row=row, col=1)
@@ -441,10 +314,8 @@ with tab_technique:
         fig.add_hline(y=30, line_dash="dot", line_color=MINT, row=row, col=1)
         row += 1
 
-        # MACD + histogramme
         hist = df['MACD'] - df['Signal']
-        fig.add_trace(go.Bar(x=df.index, y=hist, marker_color=[MINT if h >= 0 else PINK for h in hist],
-                             opacity=0.45, name='Histogramme'), row=row, col=1)
+        fig.add_trace(go.Bar(x=df.index, y=hist, marker_color=[MINT if h >= 0 else PINK for h in hist], opacity=0.45, name='Histogramme'), row=row, col=1)
         fig.add_trace(go.Scatter(x=df.index, y=df['MACD'], line=dict(color=CYAN, width=1.8), name='MACD'), row=row, col=1)
         fig.add_trace(go.Scatter(x=df.index, y=df['Signal'], line=dict(color=AMBER, width=1.8), name='Signal'), row=row, col=1)
 
@@ -549,12 +420,23 @@ with tab_docs:
             r6.metric("Taux de Couverture", fmt(ratios.get('Taux de Couverture (%)', 'N/A')))
 
             st.write("")
-            r7, _, _ = st.columns(3)
+            r7, r8, r9 = st.columns(3)
             r7.metric("LDR", fmt(ratios.get('LDR (%)', 'N/A')))
+            r8.metric("Solvabilité", fmt(ratios.get('Ratio de Solvabilité (%)', 'N/A')))
+            r9.metric("LCR", fmt(ratios.get('LCR (%)', 'N/A')))
 
-        if resultat.get("erreurs_validation"):
+        # --- ALERTES DE COHÉRENCE ---
+        alertes_globales = resultat.get("alertes", []) + resultat.get("erreurs_validation", [])
+        if alertes_globales:
             st.markdown("### ⚠️ Alertes de cohérence")
-            for err in resultat["erreurs_validation"]: st.warning(err)
+            for err in alertes_globales: 
+                st.warning(err)
+
+        # --- VALIDATION CROISÉE (Nouveauté Claude V6) ---
+        if resultat.get("validation_croisee"):
+            st.markdown("### ⚖️ Audit : Ratios publiés vs Recalculés")
+            df_val = pd.DataFrame(resultat["validation_croisee"])
+            st.dataframe(df_val, use_container_width=True, hide_index=True)
 
         st.markdown("### 🔍 Détail des données extraites")
         donnees = resultat["donnees_brutes"]
@@ -562,10 +444,21 @@ with tab_docs:
         tableau_data = []
         for k, v in donnees.items():
             if k == "resume_ia": continue
+            
+            if isinstance(v, dict):
+                val_affichee = v.get("valeur_milliers") if v.get("valeur_milliers") is not None else v.get("valeur")
+                page_pdf = v.get("page")
+                source = v.get("source", "N/A")
+            else:
+                val_affichee = v
+                page_pdf = "-"
+                source = "N/A"
+
             tableau_data.append({
                 "Indicateur": k.replace("_", " ").capitalize(),
-                "Valeur (kTND)": v.get("valeur") if isinstance(v, dict) else v,
-                "Page PDF": v.get("page") if isinstance(v, dict) else "-"
+                "Valeur (kTND)": val_affichee,
+                "Page PDF": page_pdf,
+                "Source": source
             })
 
         st.dataframe(pd.DataFrame(tableau_data), use_container_width=True, hide_index=True)
@@ -602,8 +495,7 @@ with tab_synthese:
             pdf_bytes = generer_rapport_pdf(banque_selectionnee, st.session_state.dernier_cours, score_final, rec_txt,
                                             st.session_state.score_tech, st.session_state.score_sent,
                                             st.session_state.score_fond, st.session_state.prob_ml, ratios_pour_pdf)
-            st.download_button("💾 Télécharger le PDF", data=pdf_bytes,
-                               file_name=f"Rapport_{banque_selectionnee}.pdf", mime="application/pdf")
+            st.download_button("💾 Télécharger le PDF", data=pdf_bytes, file_name=f"Rapport_{banque_selectionnee}.pdf", mime="application/pdf")
 
     with col2:
         categories = ['Technique', 'Sentiment', 'Fondamental', 'Probabilité IA', 'ROE']
@@ -626,8 +518,7 @@ with tab_synthese:
                                             line=dict(color=MINT, width=3), fillcolor="rgba(0,245,160,0.28)"))
         fig_radar.update_layout(
             polar=dict(bgcolor='rgba(20,26,41,0.35)',
-                       radialaxis=dict(visible=True, range=[0, 100], gridcolor='rgba(255,255,255,0.1)',
-                                       tickfont=dict(color=MUTED)),
+                       radialaxis=dict(visible=True, range=[0, 100], gridcolor='rgba(255,255,255,0.1)', tickfont=dict(color=MUTED)),
                        angularaxis=dict(gridcolor='rgba(255,255,255,0.1)', tickfont=dict(color=TEXT, size=13))),
             paper_bgcolor='rgba(0,0,0,0)', font=dict(color=TEXT), showlegend=True, height=520,
             margin=dict(l=60, r=60, t=40, b=60),
@@ -648,10 +539,8 @@ with tab_backtest:
             perf_bh = (df_sim['Valeur_Buy_Hold'].iloc[-1] / capital - 1) * 100
 
             c1, c2, c3 = st.columns(3)
-            c1.metric("📈 Performance IA", f"{perf_strategie:.2f}%",
-                      f"{(df_sim['Valeur_Strategie'].iloc[-1] - capital):.2f} TND")
-            c2.metric("📊 Buy & Hold", f"{perf_bh:.2f}%",
-                      f"{(df_sim['Valeur_Buy_Hold'].iloc[-1] - capital):.2f} TND")
+            c1.metric("📈 Performance IA", f"{perf_strategie:.2f}%", f"{(df_sim['Valeur_Strategie'].iloc[-1] - capital):.2f} TND")
+            c2.metric("📊 Buy & Hold", f"{perf_bh:.2f}%", f"{(df_sim['Valeur_Buy_Hold'].iloc[-1] - capital):.2f} TND")
             c3.metric("⚡ Écart vs Buy & Hold", f"{perf_strategie - perf_bh:+.2f} pts")
 
             st.write("")
@@ -659,10 +548,8 @@ with tab_backtest:
             fig_bt.add_trace(go.Scatter(x=df_sim.index, y=df_sim['Valeur_Buy_Hold'], mode='lines', name='Buy & Hold',
                                         line=dict(color=MUTED, width=2, dash='dash')))
             fig_bt.add_trace(go.Scatter(x=df_sim.index, y=df_sim['Valeur_Strategie'], mode='lines', name='Stratégie IA',
-                                        line=dict(color=MINT, width=3.5),
-                                        fill='tonexty', fillcolor="rgba(0,245,160,0.10)"))
-            fig_bt.add_hline(y=capital, line_dash="dot", line_color=AMBER, opacity=0.6,
-                             annotation_text="Capital initial", annotation_font_color=AMBER)
+                                        line=dict(color=MINT, width=3.5), fill='tonexty', fillcolor="rgba(0,245,160,0.10)"))
+            fig_bt.add_hline(y=capital, line_dash="dot", line_color=AMBER, opacity=0.6, annotation_text="Capital initial", annotation_font_color=AMBER)
             style_fig(fig_bt, height=520)
             st.plotly_chart(fig_bt, use_container_width=True)
 
