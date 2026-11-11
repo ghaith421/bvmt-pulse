@@ -133,11 +133,11 @@ MAX_PAGES_LIGNES = 120        # nombre maximal de pages dont on reconstruit les 
 # --- OCR / Vision ---
 OCR_DPI = int(os.getenv("OCR_DPI", "200"))
 OCR_WORKERS = int(os.getenv("OCR_WORKERS", str(min(4, os.cpu_count() or 2))))
-OCR_BUDGET_S = float(os.getenv("OCR_BUDGET_S", "240"))   # temps max alloué à l'OCR (puis on s'arrête)
-MAX_PAGES_OCR = 150           # pages scannées OCRisées au maximum
+OCR_BUDGET_S = float(os.getenv("OCR_BUDGET_S", "70"))   # temps max alloué à l'OCR (puis on s'arrête)
+MAX_PAGES_OCR = 80           # pages scannées OCRisées au maximum
 MAX_PAGES_MIXTES = 40         # pages texte contenant de grosses images (infographies de ratios)
 SEUIL_CONF_OCR = 0.85         # en dessous, une page financière est relue par Gemini Vision
-MAX_PAGES_VISION = int(os.getenv("MAX_PAGES_VISION", "8"))
+MAX_PAGES_VISION = int(os.getenv("MAX_PAGES_VISION", "4"))
 VISION_DPI = 150
 
 # --- validation croisée ---
