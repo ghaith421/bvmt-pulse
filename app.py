@@ -551,7 +551,7 @@ with tab_backtest:
                                         line=dict(color=MINT, width=3.5), fill='tonexty', fillcolor="rgba(0,245,160,0.10)"))
             fig_bt.add_hline(y=capital, line_dash="dot", line_color=AMBER, opacity=0.6, annotation_text="Capital initial", annotation_font_color=AMBER)
             style_fig(fig_bt, height=520)
-            st.plotly_chart(fig_bt, use_container_width=True)
+            st.plotly_chart(fig_bt, use_container_width='stretch')
 
             if perf_strategie > perf_bh:
                 banniere("Verdict", "🏆 La stratégie IA a surperformé la simple conservation", MINT)
