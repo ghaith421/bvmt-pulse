@@ -115,7 +115,7 @@ PROMPT_VERSION = "v6.0"                      # changer => invalide le cache
 CACHE_DIR = Path(os.getenv("ANALYSE_CACHE_DIR", ".cache_analyses"))
 
 LLM_ORDER = [p.strip() for p in os.getenv("LLM_ORDER", "gemini,openrouter,groq").split(",") if p.strip()]
-MODEL_GEMINI = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+MODEL_GEMINI = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
 MODEL_VISION = os.getenv("GEMINI_VISION_MODEL", MODEL_GEMINI)
 MODEL_OPENROUTER = os.getenv("OPENROUTER_MODEL", "openrouter/free")
 MODEL_GROQ = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
